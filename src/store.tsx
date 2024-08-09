@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { EVMWallet } from "@catalogfi/wallets";
 import { BrowserProvider } from "ethers";
 import { GardenJS } from "@gardenfi/core";
-import { Orderbook, Chains } from "@gardenfi/orderbook";
+import { Orderbook, Chains, TESTNET_ORDERBOOK_API } from "@gardenfi/orderbook";
 import {
   BitcoinNetwork,
   BitcoinOTA,
@@ -20,9 +20,9 @@ type EvmWalletAction = {
 };
 
 const networkConfig = {
-  chainId: "0x7A69",
-  chainName: "ethereum localnet",
-  rpcUrls: ["http://localhost:8545"],
+  chainId: "0xaa36a7",
+  chainName: "Sepolia",
+  rpcUrls: ["https://eth-sepolia.public.blastapi.io"],
   nativeCurrency: {
     name: "Ethereum",
     symbol: "ETH",
@@ -37,7 +37,7 @@ const useMetaMaskStore = create<EvmWalletState & EvmWalletAction>((set) => ({
     if (window.ethereum !== null) {
       let provider = new BrowserProvider(window.ethereum);
       let network = await provider.getNetwork();
-      if (network.chainId !== 31337n) {
+      if (network.chainId !== 11155111n) {
         await window.ethereum.request({
           method: "wallet_addEthereumChain",
           params: [networkConfig],
@@ -109,12 +109,11 @@ const useGardenSetup = () => {
       const signer = await evmProvider.getSigner();
 
       const bitcoinProvider = new BitcoinProvider(
-        BitcoinNetwork.Regtest,
-        "http://localhost:30000"
+        BitcoinNetwork.Testnet
       );
 
       const orderbook = await Orderbook.init({
-        url: "http://localhost:8080",
+        url: TESTNET_ORDERBOOK_API,
         signer: signer,
         opts: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -124,13 +123,13 @@ const useGardenSetup = () => {
       });
 
       const wallets = {
-        [Chains.bitcoin_regtest]: new BitcoinOTA(bitcoinProvider, signer),
-        [Chains.ethereum_localnet]: new EVMWallet(signer),
+        [Chains.bitcoin_testnet]: new BitcoinOTA(bitcoinProvider, signer),
+        [Chains.ethereum_sepolia]: new EVMWallet(signer),
       };
 
       const garden = new GardenJS(orderbook, wallets);
 
-      setGarden(garden, wallets[Chains.bitcoin_regtest]);
+      setGarden(garden, wallets[Chains.bitcoin_testnet]);
     })();
   }, [evmProvider, setGarden]);
 };
